@@ -60,9 +60,12 @@ function parse(text){
  const desc=rest.filter(x=>!CUR.includes(x)&&!FILLER.includes(x)).join(' ');
  return {type,amount,description:desc,category};}
 function monthKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
-function summarize(entries,month){let inc=0,exp=0;const byCat={};
- entries.filter(e=>monthKey(e.ts)===month).forEach(e=>{if(e.type==='income')inc+=e.amount;else{exp+=e.amount;byCat[e.category]=(byCat[e.category]||0)+e.amount;}});
- return {income:inc,expense:exp,balance:inc-exp,byCat};}
+// totals are kept separate per currency, never added across currencies
+function summarize(entries,month){const out={};
+ entries.filter(e=>monthKey(e.ts)===month).forEach(e=>{const c=e.currency||'EGP';const o=out[c]||(out[c]={income:0,expense:0,balance:0,byCat:{}});
+  if(e.type==='income')o.income+=e.amount;else{o.expense+=e.amount;o.byCat[e.category]=(o.byCat[e.category]||0)+e.amount;}
+  o.balance=o.income-o.expense;});
+ return out;}
 function toCSV(entries){const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
  return '\ufeffdate,type,amount,currency,category,description\n'+entries.map(e=>[new Date(e.ts).toISOString().slice(0,10),e.type,e.amount,e.currency||'',q(e.category),q(e.description)].join(',')).join('\n');}
 const CURRENCIES=[['EGP','جنيه مصري'],['SAR','ريال سعودي'],['AED','درهم إماراتي'],['KWD','دينار كويتي'],['QAR','ريال قطري'],['USD','دولار'],['EUR','يورو']];

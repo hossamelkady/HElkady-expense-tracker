@@ -1,4 +1,4 @@
-const assert=require('assert');const E=require('./logic.js');
+const assert=require('assert');const E=require('./www/logic.js');
 const p=E.parse;
 let r=p('صرفت 10 جنيه جبت عيش');assert.deepStrictEqual([r.type,r.amount,r.category,r.description],['expense',10,'طعام','عيش']);
 r=p('دفعت عشرين جنيه مواصلات');assert.deepStrictEqual([r.amount,r.category],[20,'مواصلات']);
@@ -13,7 +13,10 @@ r=p('صرفت ميتين جنيه على هدوم');assert.deepStrictEqual([r.am
 r=p('صرفت الف جنيه');assert.strictEqual(r.amount,1000);
 r=p('دفعت 3 تلاف');assert.ok(r&&r.amount>=3);
 assert.strictEqual(p('جبت عيش'),null);
-const now=Date.now();const es=[{ts:now,type:'expense',amount:10,category:'طعام',description:'عيش'},{ts:now,type:'income',amount:100,category:'دخل',description:''},{ts:now,type:'expense',amount:5,category:'طعام',description:''}];
-const s=E.summarize(es,E.monthKey(now));assert.deepStrictEqual([s.income,s.expense,s.balance,s.byCat['طعام']],[100,15,85,15]);
-assert.ok(E.toCSV(es).split('\n').length===4);
+const now=Date.now();const es=[{ts:now,type:'expense',amount:10,currency:'EGP',category:'طعام',description:'عيش'},{ts:now,type:'income',amount:100,currency:'EGP',category:'دخل',description:''},{ts:now,type:'expense',amount:5,currency:'EGP',category:'طعام',description:''},{ts:now,type:'expense',amount:7,currency:'USD',category:'طعام',description:''},{ts:now,type:'expense',amount:3,category:'طعام',description:'old entry without currency'}];
+const s=E.summarize(es,E.monthKey(now));
+assert.deepStrictEqual(Object.keys(s).sort(),['EGP','USD']);
+assert.deepStrictEqual([s.EGP.income,s.EGP.expense,s.EGP.balance,s.EGP.byCat['طعام']],[100,18,82,18]);
+assert.deepStrictEqual([s.USD.income,s.USD.expense,s.USD.balance],[0,7,-7]);
+assert.ok(E.toCSV(es).split('\n').length===6);
 console.log('expense tests passed');

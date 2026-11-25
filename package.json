@@ -4,7 +4,18 @@
   "description": "Voice-enabled expense tracker PWA: say or type \"\u0635\u0631\u0641\u062a 10 \u062c\u0646\u064a\u0647 \u062c\u0628\u062a \u0639\u064a\u0634\" and it records amount, category and type. Currency selectable in settings, monthly summary, CSV export, data stays on the device.",
   "scripts": {
     "test": "node test.js",
-    "start": "npx --yes serve ."
+    "start": "npx --yes serve www",
+    "sync": "cap sync android",
+    "android": "cap open android",
+    "build:apk": "cd android && ./gradlew assembleDebug"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor-community/speech-recognition": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
 }

@@ -1,0 +1,8 @@
+{
+  "appId": "com.helkady.expenses",
+  "appName": "متتبع المصروفات",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}

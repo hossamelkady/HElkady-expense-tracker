@@ -38,7 +38,7 @@ if(native){// Android app: use the native speech recognition plugin
    busy=true;$('mic').classList.add('on');
    const r=await SP.start({language:'ar-EG',maxResults:1,prompt:'قول المصروف',popup:true,partialResults:false});
    if(r&&r.matches&&r.matches[0]){$('txt').value=r.matches[0];preview();}
-  }catch(e){}finally{busy=false;$('mic').classList.remove('on');}};
+  }catch(e){if(e&&!/cancel|no match|stop/i.test(String(e.message||e)))alert('تعذر التسجيل الصوتي: '+(e.message||e));}finally{busy=false;$('mic').classList.remove('on');}};
 }else if(!SR){$('mic').disabled=true;$('mic').title='المتصفح مش بيدعم الصوت';}else{let rec=null;
  $('mic').onclick=()=>{if(rec){rec.stop();return;}rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;$('mic').classList.add('on');
   rec.onresult=ev=>{$('txt').value=ev.results[0][0].transcript;preview();};

@@ -1,17 +1,24 @@
 const $=id=>document.getElementById(id);
 const load=(k,f)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null||typeof v!==typeof f||Array.isArray(v)!==Array.isArray(f)?f:v}catch(e){return f}};
-let entries=load('exp-entries',[]);let cfg=load('exp-cfg',{currency:'EGP'});let parsed=null;
+let entries=load('exp-entries',[]);let cfg=load('exp-cfg',{currency:'EGP'});if(!Array.isArray(cfg.cats))cfg.cats=[];let parsed=null;
 const cname=c=>(EXP.CURRENCIES.find(x=>x[0]===c)||[c,c])[1];
 const save=()=>{localStorage.setItem('exp-entries',JSON.stringify(entries));localStorage.setItem('exp-cfg',JSON.stringify(cfg));};
 const fmt=n=>(Math.round(n*100)/100).toLocaleString('ar-EG');
 EXP.CURRENCIES.forEach(([c,n])=>{const o=document.createElement('option');o.value=c;o.textContent=n+' ('+c+')';$('cur').appendChild(o);});
 $('cur').value=cfg.currency;$('cur').onchange=()=>{cfg.currency=$('cur').value;save();render();};
 $('gear').onclick=()=>{const s=$('settings');s.style.display=s.style.display==='none'?'block':'none';};
-function preview(){parsed=EXP.parse($('txt').value);$('prev').textContent=parsed?((parsed.type==='income'?'دخل: ':'مصروف: ')+fmt(parsed.amount)+' '+cname(cfg.currency)+' | '+parsed.category+(parsed.description?' | '+parsed.description:'')):($('txt').value?'مش لاقي مبلغ، قول المبلغ بالأرقام أو بالكلام':'');}
+function allCats(){return EXP.BUILTIN.concat(cfg.cats.map(c=>c.name).filter(n=>!EXP.BUILTIN.includes(n)));}
+function drawCats(){const keep=$('catsel').value;$('catsel').innerHTML='<option value="auto">تلقائي</option>'+allCats().map(n=>'<option></option>').join('');
+ [...$('catsel').options].slice(1).forEach((o,i)=>{o.value=o.textContent=allCats()[i];});$('catsel').value=[...$('catsel').options].some(o=>o.value===keep)?keep:'auto';
+ const L=$('catlist');L.innerHTML='';cfg.cats.forEach((c,i)=>{const d=document.createElement('div');d.className='e';const a=document.createElement('span');a.textContent=c.name+(c.words?' ('+c.words+')':'');const x=document.createElement('button');x.type='button';x.className='danger';x.textContent='✕';x.onclick=()=>{cfg.cats.splice(i,1);save();drawCats();preview();};d.append(a,x);L.appendChild(d);});}
+$('catsel').onchange=()=>preview();
+$('cadd').onclick=()=>{const n=$('cname').value.trim();if(!n){alert('اكتب اسم التصنيف');return;}if(allCats().includes(n)){alert('التصنيف موجود');return;}
+ cfg.cats.push({name:n,words:$('cwords').value.trim()});$('cname').value='';$('cwords').value='';save();drawCats();};
+function preview(){parsed=EXP.parse($('txt').value,cfg.cats);if(parsed&&$('catsel').value!=='auto'&&parsed.type==='expense')parsed.category=$('catsel').value;$('prev').textContent=parsed?((parsed.type==='income'?'دخل: ':'مصروف: ')+fmt(parsed.amount)+' '+cname(cfg.currency)+' | '+parsed.category+(parsed.description?' | '+parsed.description:'')):($('txt').value?'مش لاقي مبلغ، قول المبلغ بالأرقام أو بالكلام':'');}
 $('txt').oninput=preview;
 $('save').onclick=()=>{preview();if(!parsed){alert('مفيش مبلغ واضح');return;}
  entries.push({id:Date.now(),ts:Date.now(),type:parsed.type,amount:parsed.amount,currency:cfg.currency,category:parsed.category,description:parsed.description||$('txt').value});
- $('txt').value='';$('prev').textContent='';save();render();};
+ $('txt').value='';$('prev').textContent='';$('catsel').value='auto';save();render();};
 function monthsList(){const s=new Set(entries.map(e=>EXP.monthKey(e.ts)));s.add(EXP.monthKey(Date.now()));return [...s].sort().reverse();}
 function render(){const cur=$('month').value;const ms=monthsList();$('month').innerHTML=ms.map(m=>'<option>'+m+'</option>').join('');$('month').value=ms.includes(cur)?cur:ms[0];
  const m=$('month').value;const sm=EXP.summarize(entries,m);const cs=Object.keys(sm);if(!cs.length)cs.push(cfg.currency);
@@ -30,9 +37,11 @@ $('month').onchange=render;
 $('csv').onclick=()=>{const b=new Blob([EXP.toCSV(entries)],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='expenses.csv';a.click();};
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const native=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform();
+drawCats();render();
+const getSP=()=>{const C=window.Capacitor||{};return (C.Plugins&&C.Plugins.SpeechRecognition)||(typeof C.registerPlugin==='function'?C.registerPlugin('SpeechRecognition'):null);};
 if(native){// Android app: use the native speech recognition plugin
- const SP=window.Capacitor.registerPlugin('SpeechRecognition');let busy=false;
- $('mic').onclick=async()=>{if(busy){try{await SP.stop();}catch(e){}return;}
+ let busy=false;
+ $('mic').onclick=async()=>{const SP=getSP();if(!SP){alert('إضافة الصوت مش موجودة في التطبيق');return;}if(busy){try{await SP.stop();}catch(e){}return;}
   try{const a=await SP.available();if(!a.available){alert('التعرف على الصوت غير متاح على الجهاز');return;}
    const p=await SP.requestPermissions();if(p.speechRecognition!=='granted'){alert('محتاج إذن الميكروفون');return;}
    busy=true;$('mic').classList.add('on');
@@ -43,4 +52,6 @@ if(native){// Android app: use the native speech recognition plugin
  $('mic').onclick=()=>{if(rec){rec.stop();return;}rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;$('mic').classList.add('on');
   rec.onresult=ev=>{$('txt').value=ev.results[0][0].transcript;preview();};
   rec.onerror=()=>{};rec.onend=()=>{rec=null;$('mic').classList.remove('on');};rec.start();};}
-render();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+
+
+if('serviceWorker' in navigator&&!native)navigator.serviceWorker.register('sw.js');

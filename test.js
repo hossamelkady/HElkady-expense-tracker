@@ -20,3 +20,4 @@ assert.deepStrictEqual([s.EGP.income,s.EGP.expense,s.EGP.balance,s.EGP.byCat['ط
 assert.deepStrictEqual([s.USD.income,s.USD.expense,s.USD.balance],[0,7,-7]);
 assert.ok(E.toCSV(es).split('\n').length===6);
 console.log('expense tests passed');
+{const c=[{name:'قطط',words:'رمل بيطري'}];let r=E.parse('صرفت 100 جنيه رمل',c);assert.strictEqual(r.category,'قطط');r=E.parse('صرفت 100 جنيه عيش',c);assert.strictEqual(r.category,'طعام');r=E.parse('صرفت 50 على قطط',c);assert.strictEqual(r.category,'قطط');console.log('custom cat tests passed');}

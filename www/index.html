@@ -3,8 +3,9 @@
 #mic.on{background:#dc2626}</style></head><body>
 <header>💰 المصروفات <button class="alt" id="gear" type="button" aria-label="الإعدادات">⚙️</button></header><main>
 <div class="card"><label>قول أو اكتب (مثال: صرفت 10 جنيه جبت عيش)</label><div class="row"><input id="txt" placeholder="صرفت 10 جنيه جبت عيش"><button id="mic" type="button" style="flex:0 0 56px">🎤</button></div>
+<label>التصنيف</label><select id="catsel"></select>
 <div id="prev" class="muted" style="margin:8px 0"></div><button id="save">حفظ</button></div>
 <div class="card" id="sum"></div>
 <div class="card"><div class="row"><b>العمليات</b><select id="month"></select></div><div id="list"></div><br><button class="alt" id="csv">تصدير CSV</button></div>
-<div class="card" id="settings" style="display:none"><b>الإعدادات</b><label>العملة</label><select id="cur"></select></div></main>
+<div class="card" id="settings" style="display:none"><b>الإعدادات</b><label>العملة</label><select id="cur"></select><hr><b>تصنيفات خاصة بيك</b><div id="catlist"></div><label>اسم التصنيف</label><input id="cname" placeholder="مثال: قطط"><label>كلمات بتدل عليه (مفصولة بمسافة أو فاصلة)</label><input id="cwords" placeholder="مثال: اكل قطط رمل بيطري"><br><br><button id="cadd" type="button">إضافة التصنيف</button></div></main>
 <script src="logic.js"></script><script src="app.js"></script></body></html>

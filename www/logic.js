@@ -44,7 +44,7 @@ const CATMAP={};CATS.forEach(([c,ws])=>ws.split(' ').forEach(w=>CATMAP[norm(w)]=
 const INC_CATS={};
 function tailFrac(tokens,i,used){let k=i;if(tokens[k]&&CUR.includes(tokens[k]))k++;const t=tokens[k];
  if(t){const f=FRAC[t.replace(/^و/,'')];if(f!==undefined&&(t[0]==='و'||k===i)&&!used.has(k)){used.add(k);return f;}}return 0;}
-function parse(text){
+function parse(text,custom){
  const t=norm(text).replace(/[^\u0600-\u06FFa-z0-9.\s]/g,' ');
  const tokens=t.split(/\s+/).filter(Boolean);
  let amount=null,used=new Set();
@@ -56,7 +56,10 @@ function parse(text){
  const rest=tokens.filter((x,i)=>!used.has(i));
  const type=rest.some(x=>INCOME.includes(x))?'income':'expense';
  let category=type==='income'?'دخل':'أخرى';
- for(const x of rest){const k=x.replace(/^(ال|ل|ب)/,'');if(CATMAP[x]||CATMAP[k]){if(type==='expense'){category=CATMAP[x]||CATMAP[k];break;}}}
+ let hit=false;
+ if(type==='expense'&&Array.isArray(custom)){const cm={};custom.forEach(c=>{if(!c||!c.name)return;[c.name].concat(String(c.words||'').split(/[,،\s]+/)).forEach(w=>{const k=norm(w).trim();if(k)cm[k]=c.name;});});
+  for(const x of rest){const k=x.replace(/^(ال|ل|ب)/,'');if(cm[x]||cm[k]){category=cm[x]||cm[k];hit=true;break;}}}
+ if(!hit)for(const x of rest){const k=x.replace(/^(ال|ل|ب)/,'');if(CATMAP[x]||CATMAP[k]){if(type==='expense'){category=CATMAP[x]||CATMAP[k];break;}}}
  const desc=rest.filter(x=>!CUR.includes(x)&&!FILLER.includes(x)).join(' ');
  return {type,amount,description:desc,category};}
 function monthKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
@@ -69,6 +72,7 @@ function summarize(entries,month){const out={};
 function toCSV(entries){const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
  return '\ufeffdate,type,amount,currency,category,description\n'+entries.map(e=>[new Date(e.ts).toISOString().slice(0,10),e.type,e.amount,e.currency||'',q(e.category),q(e.description)].join(',')).join('\n');}
 const CURRENCIES=[['EGP','جنيه مصري'],['SAR','ريال سعودي'],['AED','درهم إماراتي'],['KWD','دينار كويتي'],['QAR','ريال قطري'],['USD','دولار'],['EUR','يورو']];
-const api={norm,parse,wordsToNumber,summarize,toCSV,monthKey,CURRENCIES};
+const BUILTIN=CATS.map(c=>c[0]).concat(['أخرى']);
+const api={BUILTIN,norm,parse,wordsToNumber,summarize,toCSV,monthKey,CURRENCIES};
 if(typeof module!=='undefined')module.exports=api;else root.EXP=api;
 })(typeof window!=='undefined'?window:globalThis);
